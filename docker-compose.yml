@@ -1,0 +1,34 @@
+version: '3.9'
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: "myDb"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p1234 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  my-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+        SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/myDb"
+        SPRING_DATASOURCE_USERNAME: "root"
+        SPRING_DATASOURCE_PASSWORD: "1234"
+        SPRING_JPA_HIBERNATE_DDL_AUTO: "create-drop"
+        SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+        SPRING_JPA_SHOW_SQL: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
